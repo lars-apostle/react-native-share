@@ -48,6 +48,32 @@
         UIViewController *ctrl = RCTPresentedViewController();
         [ctrl presentViewController:composeController animated:YES completion:Nil];
         resolve(@[@true, @""]);
+      } else if ([serviceType isEqualToString:@"com.apple.social.facebook"]) {
+        NSLog(@"Try sharing multiple images to Facebook");
+        SLComposeViewController *composeController = [SLComposeViewController  composeViewControllerForServiceType:serviceType];
+        NSArray *urlsArray = options[@"urls"];
+        for (int i=0; i<urlsArray.count; i++) {
+            NSURL *URL = [RCTConvert NSURL:urlsArray[i]];
+            if (URL) {
+                if ([URL.scheme.lowercaseString isEqualToString:@"data"]) {
+                    NSError *error;
+                    NSData *data = [NSData dataWithContentsOfURL:URL
+                                                        options:(NSDataReadingOptions)0
+                                                        error:&error];
+                    if (!data) {
+                        reject(@"no data", @"no data", error);
+                        return;
+                    }
+                    UIImage *image = [UIImage imageWithData: data];
+                    [composeController addImage:image];
+                } else {
+                    [composeController addURL:URL];
+                }
+            }
+        }
+        UIViewController *ctrl = RCTPresentedViewController();
+        [ctrl presentViewController:composeController animated:YES completion:Nil];
+        resolve(@[@true, @""]);
       } else {
         NSString *errorMessage = @"Not installed";
         NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey: NSLocalizedString(errorMessage, nil)};
